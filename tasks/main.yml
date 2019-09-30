@@ -1,0 +1,20 @@
+---
+
+- name: Including secret configurations
+  include_vars: "vault/secrets.yml"
+  tags:
+    - always
+
+#-------------------------------------------------------------------------------
+
+- block:
+
+    - import_tasks: install.debian.yml
+      tags:
+        - install
+
+    - import_tasks: configure.debian.yml
+      tags:
+        - configure
+
+  when: ansible_os_family == 'Debian'

@@ -1,0 +1,18 @@
+galaxy_info:
+  role_name: pupeteer
+  author: Jan Mach
+  description: Ansible role for installation of central node for custom server management system.
+  license: MIT
+  min_ansible_version: 2.5
+  github_branch: master
+  platforms:
+    - name: Debian
+      versions:
+        - all
+  galaxy_tags:
+    - system
+    - management
+    - users
+
+dependencies:
+  - honzamach.accounts

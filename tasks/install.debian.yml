@@ -1,0 +1,6 @@
+---
+
+- name: Installing necessary packages
+  apt:
+    name: "{{ hm_pupeteer__install_packages }}"
+    state: latest

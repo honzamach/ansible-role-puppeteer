@@ -1,0 +1,83 @@
+---
+
+- name: Managing central Ansible playbook repository storage
+  file:
+    path: /var/ansible
+    owner: root
+    group: root
+    mode: 0755
+    state: directory
+
+- name: Creating Git repositories for user Ansible playbooks
+  shell: /usr/bin/git init --bare --shared "/var/ansible/{{ item.key }}"
+  args:
+    creates: "/var/ansible/{{ item.key }}"
+  with_dict: "{{ hm_accounts__users }}"
+
+- name: Enabling Git post-update hooks for user Ansible playbook repositories
+  template:
+    src: post-update.j2
+    dest: "/var/ansible/{{ item.key }}/hooks/post-update"
+    owner: "{{ item.key }}"
+    group: "{{ item.key }}"
+    mode: "4775"
+  with_dict: "{{ hm_accounts__users }}"
+
+- name: Ensuring correct ownerwhips and permissions for user Ansible playbook repositories
+  file:
+    path: "/var/ansible/{{ item.key }}"
+    owner: "{{ item.key }}"
+    group: "{{ item.key }}"
+    mode: "2770"
+    state: directory
+  with_dict: "{{ hm_accounts__users }}"
+
+- name: Ensuring correct ownerwhips and permissions for user Ansible playbook repository contents
+  file:
+    path: "/var/ansible/{{ item.key }}"
+    owner: "{{ item.key }}"
+    group: "{{ item.key }}"
+    state: directory
+    recurse: yes
+  with_dict: "{{ hm_accounts__users }}"
+
+#-------------------------------------------------------------------------------
+
+- name: Creating user groups for custom Ansible playbooks
+  group:
+    name: "{{ item['key'] }}"
+    state: present
+  with_dict: "{{ hm_puppeteer__custom_repositories }}"
+
+- name: Creating Git repositories for custom Ansible playbooks
+  shell: /usr/bin/git init --bare --shared "/var/ansible/{{ item.key }}"
+  args:
+    creates: "/var/ansible/{{ item.key }}"
+  with_dict: "{{ hm_puppeteer__custom_repositories }}"
+
+- name: Enabling Git post-update hooks for custom Ansible playbook repositories
+  template:
+    src: post-update.j2
+    dest: "/var/ansible/{{ item.key }}/hooks/post-update"
+    owner: "{{ item.key }}"
+    group: "{{ item.key }}"
+    mode: "4775"
+  with_dict: "{{ hm_puppeteer__custom_repositories }}"
+
+- name: Ensuring correct ownerwhips and permissions for custom Ansible playbook repositories
+  file:
+    path: "/var/ansible/{{ item.key }}"
+    owner: "{{ item.key }}"
+    group: "{{ item.key }}"
+    mode: "2770"
+    state: directory
+  with_dict: "{{ hm_puppeteer__custom_repositories }}"
+
+- name: Ensuring correct ownerwhips and permissions for custom Ansible playbook repository contents
+  file:
+    path: "/var/ansible/{{ item.key }}"
+    owner: "{{ item.key }}"
+    group: "{{ item.key }}"
+    state: directory
+    recurse: yes
+  with_dict: "{{ hm_puppeteer__custom_repositories }}"
