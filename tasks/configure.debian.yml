@@ -22,15 +22,6 @@
     creates: "/var/ansible/{{ item.key }}"
   with_dict: "{{ hm_puppeteer__repositories }}"
 
-- name: Enabling Git post-update hooks for custom Ansible playbook repositories
-  template:
-    src: post-update.j2
-    dest: "/var/ansible/{{ item.key }}/hooks/post-update"
-    owner: root
-    group: "{{ item.key }}"
-    mode: "4775"
-  with_dict: "{{ hm_puppeteer__repositories }}"
-
 - name: Ensuring correct ownerwhips and permissions for custom Ansible playbook repositories
   file:
     path: "/var/ansible/{{ item.key }}"
