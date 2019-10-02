@@ -8,76 +8,95 @@
     mode: 0755
     state: directory
 
-- name: Creating Git repositories for user Ansible playbooks
-  shell: /usr/bin/git init --bare --shared "/var/ansible/{{ item.key }}"
-  args:
-    creates: "/var/ansible/{{ item.key }}"
-  with_dict: "{{ hm_accounts__users }}"
-
-- name: Enabling Git post-update hooks for user Ansible playbook repositories
-  template:
-    src: post-update.j2
-    dest: "/var/ansible/{{ item.key }}/hooks/post-update"
-    owner: "{{ item.key }}"
-    group: "{{ item.key }}"
-    mode: "4775"
-  with_dict: "{{ hm_accounts__users }}"
-
-- name: Ensuring correct ownerwhips and permissions for user Ansible playbook repositories
-  file:
-    path: "/var/ansible/{{ item.key }}"
-    owner: "{{ item.key }}"
-    group: "{{ item.key }}"
-    mode: "2770"
-    state: directory
-  with_dict: "{{ hm_accounts__users }}"
-
-- name: Ensuring correct ownerwhips and permissions for user Ansible playbook repository contents
-  file:
-    path: "/var/ansible/{{ item.key }}"
-    owner: "{{ item.key }}"
-    group: "{{ item.key }}"
-    state: directory
-    recurse: yes
-  with_dict: "{{ hm_accounts__users }}"
-
 #-------------------------------------------------------------------------------
 
-- name: Creating user groups for custom Ansible playbooks
+- name: Creating user groups for custom Ansible playbook repositories
   group:
     name: "{{ item['key'] }}"
     state: present
-  with_dict: "{{ hm_puppeteer__custom_repositories }}"
+  with_dict: "{{ hm_puppeteer__repositories }}"
 
 - name: Creating Git repositories for custom Ansible playbooks
   shell: /usr/bin/git init --bare --shared "/var/ansible/{{ item.key }}"
   args:
     creates: "/var/ansible/{{ item.key }}"
-  with_dict: "{{ hm_puppeteer__custom_repositories }}"
+  with_dict: "{{ hm_puppeteer__repositories }}"
 
 - name: Enabling Git post-update hooks for custom Ansible playbook repositories
   template:
     src: post-update.j2
     dest: "/var/ansible/{{ item.key }}/hooks/post-update"
-    owner: "{{ item.key }}"
+    owner: root
     group: "{{ item.key }}"
     mode: "4775"
-  with_dict: "{{ hm_puppeteer__custom_repositories }}"
+  with_dict: "{{ hm_puppeteer__repositories }}"
 
 - name: Ensuring correct ownerwhips and permissions for custom Ansible playbook repositories
   file:
     path: "/var/ansible/{{ item.key }}"
-    owner: "{{ item.key }}"
+    owner: root
     group: "{{ item.key }}"
     mode: "2770"
     state: directory
-  with_dict: "{{ hm_puppeteer__custom_repositories }}"
+  with_dict: "{{ hm_puppeteer__repositories }}"
 
 - name: Ensuring correct ownerwhips and permissions for custom Ansible playbook repository contents
   file:
     path: "/var/ansible/{{ item.key }}"
-    owner: "{{ item.key }}"
+    owner: root
     group: "{{ item.key }}"
     state: directory
     recurse: yes
-  with_dict: "{{ hm_puppeteer__custom_repositories }}"
+  with_dict: "{{ hm_puppeteer__repositories }}"
+
+#-------------------------------------------------------------------------------
+
+- name: Ensuring main Ansible access directory for each unprivileged user account
+  file:
+    path: "/home/{{ item['key'] }}/ansible"
+    owner: "{{ item['key'] }}"
+    group: "{{ item['key'] }}"
+    mode: 0755
+    state: directory
+  with_dict: "{{ hm_accounts__users }}"
+
+- name: Linking appropriate repositories for each unprivileged user account
+  file:
+    src: "/var/ansible/{{ item[0] }}"
+    dest: "/home/{{ item[1] }}/ansible/{{ item[0] }}"
+    state: link
+  with_nested:
+     - "{{ hm_puppeteer__repositories.keys() }}"
+     - "{{ hm_accounts__users.keys() }}"
+  when: hm_puppeteer__repositories[item[0]] in hm_accounts__users[item[1]]['groups']
+
+- name: Detecting list of all existing Ansible repositories
+  find:
+    paths: "/var/ansible"
+    file_type: directory
+  register: result_ansible_reps
+
+- name: Ensuring ownerships of assigned Ansible repositories
+  file:
+    path: "/var/ansible/{{ item['key'] }}"
+    owner: root
+    group: "{{ item['value'] }}"
+    mode: 0750
+    state: directory
+  with_dict: "{{ hm_puppeteer__repositories }}"
+
+- name: Detecting list of existing links to main Ansible repository access directory for each unprivileged user account
+  shell: "/usr/bin/find /home/{{ item['key'] }}/ansible -type l"
+  with_dict: "{{ hm_accounts__users }}"
+  register: result_ansible_links
+  changed_when: False
+
+- name: Removing unnecessary links to main log access directory for each unprivileged user account
+  file:
+    path: "/home/{{ item[0]['item']['key'] }}/ansible/{{ item[1]|basename }}"
+    state: absent
+  with_subelements:
+    - "{{ result_ansible_links['results'] }}"
+    - stdout_lines
+  when: (item[1]|basename not in hm_puppeteer__repositories) or (hm_puppeteer__repositories[item[1]|basename] not in hm_accounts__users[item[0]['item']['key']]['groups'])
+
