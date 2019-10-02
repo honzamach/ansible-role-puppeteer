@@ -12,4 +12,4 @@
 echo Running: wai=`whoami` uid=$UID euid=$EUID pwd=`pwd` args=$@
 
 # Make sure the repository contents will always have correct permissions
-/bin/chown -R {{ item['key'] }}:{{ item['key'] }} /var/ansible/{{ item['key'] }}
+/bin/chown -R root:{{ item['key'] }} /var/ansible/{{ item['key'] }}
