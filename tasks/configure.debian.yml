@@ -53,13 +53,13 @@
 
 - name: Linking appropriate repositories for each unprivileged user account
   file:
-    src: "/var/ansible/{{ item[0] }}"
-    dest: "/home/{{ item[1] }}/ansible/{{ item[0] }}"
+    src: "/var/ansible/{{ item[0].key }}"
+    dest: "/home/{{ item[1].key }}/ansible/{{ item[0].key }}"
     state: link
   with_nested:
-     - "{{ hm_puppeteer__repositories.keys() }}"
-     - "{{ hm_accounts__users.keys() }}"
-  when: hm_puppeteer__repositories[item[0]] in hm_accounts__users[item[1]]['groups']
+     - "{{ hm_puppeteer__repositories | dict2items }}"
+     - "{{ hm_accounts__users | dict2items }}"
+  when: hm_puppeteer__repositories[item[0].key] in hm_accounts__users[item[1].key]['groups']
 
 - name: Detecting list of all existing Ansible repositories
   find:
@@ -73,7 +73,7 @@
   register: result_ansible_links
   changed_when: False
 
-- name: Removing unnecessary links to main log access directory for each unprivileged user account
+- name: Removing unnecessary links to main Ansible repository access directory for each unprivileged user account
   file:
     path: "/home/{{ item[0]['item']['key'] }}/ansible/{{ item[1]|basename }}"
     state: absent
