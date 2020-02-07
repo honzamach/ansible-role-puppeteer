@@ -1,6 +1,6 @@
 ---
 
-- name: Installing necessary packages
+- name: Installing necessary system packages
   apt:
-    name: "{{ hm_pupeteer__install_packages }}"
+    name: "{{ hm_pupeteer__install_packages[ansible_os_family|lower]['apt'] }}"
     state: latest

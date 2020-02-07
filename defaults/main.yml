@@ -1,12 +1,8 @@
 ---
 
-#
-#
-#
 hm_pupeteer__install_packages:
-  - git
+  debian:
+    apt:
+      - git
 
-#
-#
-#
-hm_puppeteer__custom_repositories: {}
+hm_puppeteer__repositories: {}
