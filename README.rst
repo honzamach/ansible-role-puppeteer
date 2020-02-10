@@ -11,7 +11,16 @@ Role **puppeteer**
 * `GitHub repository <https://github.com/honzamach/ansible-role-pupeteer>`__
 * `Travis CI page <https://travis-ci.org/honzamach/ansible-role-pupeteer>`__
 
-Ansible role for installation of central node for custom server management system.
+Ansible role for installation of server providing shared Git repositories. It
+may be used as central repository hosting node for the `MSMS <https://github.com/honzamach/msms>`__
+system, hence the name (master of puppets ;-))
+
+Currently the resulting state on the target host is very simple. Repositories
+are created within preconfigured directory and ownership is given to specific
+system group. There is a system account for each user that is allowed to access
+any repository. Each user is assigned to one or more system groups according to
+the list of repositories he/she is allowed to access. Finally each repository
+is linked to home directories of all users that have been granted access.
 
 **Table of Contents:**
 
@@ -133,6 +142,21 @@ Internal role variables
             apt:
               - git
               - ...
+
+.. envvar:: hm_puppeteer__repositories_dir
+
+    Path do directory to which shared repositories will be placed.
+
+    * *Datatype:* ``string``
+    * *Default:* ``"/var/reps"
+
+.. envvar:: hm_puppeteer__home_subdir
+
+    Subdirectory of home directory of each user to which to link repositories
+    he is allowed to access. Path must begin with ``/``.
+
+    * *Datatype:* ``string``
+    * *Default:* ``"/reps"
 
 .. envvar:: hm_puppeteer__repositories
 

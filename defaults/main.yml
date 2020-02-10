@@ -5,4 +5,8 @@ hm_pupeteer__install_packages:
     apt:
       - git
 
+hm_puppeteer__repositories_dir: /var/reps
+
+hm_puppeteer__home_subdir: /reps
+
 hm_puppeteer__repositories: {}

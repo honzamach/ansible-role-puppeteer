@@ -1,8 +1,8 @@
 ---
 
-- name: Managing central Ansible playbook repository storage
+- name: Managing central Git repository storage
   file:
-    path: /var/ansible
+    path: "{{ hm_puppeteer__repositories_dir }}"
     owner: root
     group: root
     mode: 0755
@@ -10,30 +10,30 @@
 
 #-------------------------------------------------------------------------------
 
-- name: Creating user groups for custom Ansible playbook repositories
+- name: Creating user groups for custom Git repositories
   group:
     name: "{{ item['key'] }}"
     state: present
   with_dict: "{{ hm_puppeteer__repositories }}"
 
-- name: Creating Git repositories for custom Ansible playbooks
-  shell: /usr/bin/git init --bare --shared "/var/ansible/{{ item.key }}"
+- name: Creating Git repositories
+  shell: /usr/bin/git init --bare --shared "{{ hm_puppeteer__repositories_dir }}/{{ item.key }}"
   args:
-    creates: "/var/ansible/{{ item.key }}"
+    creates: "{{ hm_puppeteer__repositories_dir }}/{{ item.key }}"
   with_dict: "{{ hm_puppeteer__repositories }}"
 
-- name: Ensuring correct ownerwhips and permissions for custom Ansible playbook repositories
+- name: Ensuring correct ownerwhips and permissions for custom Git repositories
   file:
-    path: "/var/ansible/{{ item.key }}"
+    path: "{{ hm_puppeteer__repositories_dir }}/{{ item.key }}"
     owner: root
     group: "{{ item.key }}"
     mode: "2770"
     state: directory
   with_dict: "{{ hm_puppeteer__repositories }}"
 
-- name: Ensuring correct ownerwhips and permissions for custom Ansible playbook repository contents
+- name: Ensuring correct ownerwhips and permissions for custom Git repository contents
   file:
-    path: "/var/ansible/{{ item.key }}"
+    path: "{{ hm_puppeteer__repositories_dir }}/{{ item.key }}"
     owner: root
     group: "{{ item.key }}"
     state: directory
@@ -42,9 +42,9 @@
 
 #-------------------------------------------------------------------------------
 
-- name: Ensuring main Ansible access directory for each unprivileged user account
+- name: Ensuring main Git access directory for each unprivileged user account
   file:
-    path: "/home/{{ item['key'] }}/ansible"
+    path: "/home/{{ item['key'] }}{{ hm_puppeteer__home_subdir }}"
     owner: "{{ item['key'] }}"
     group: "{{ item['key'] }}"
     mode: 0750
@@ -53,32 +53,32 @@
 
 - name: Linking appropriate repositories for each unprivileged user account
   file:
-    src: "/var/ansible/{{ item[0].key }}"
-    dest: "/home/{{ item[1].key }}/ansible/{{ item[0].key }}"
+    src: "{{ hm_puppeteer__repositories_dir }}/{{ item[0].key }}"
+    dest: "/home/{{ item[1].key }}{{ hm_puppeteer__home_subdir }}/{{ item[0].key }}"
     state: link
   with_nested:
      - "{{ hm_puppeteer__repositories | dict2items }}"
      - "{{ hm_accounts__users | dict2items }}"
   when: hm_puppeteer__repositories[item[0].key] in hm_accounts__users[item[1].key]['groups']
 
-- name: Detecting list of all existing Ansible repositories
+- name: Detecting list of all existing Git repositories
   find:
-    paths: "/var/ansible"
+    paths: "{{ hm_puppeteer__repositories_dir }}"
     file_type: directory
-  register: result_ansible_reps
+  register: result_git_reps
 
-- name: Detecting list of existing links to main Ansible repository access directory for each unprivileged user account
-  shell: "/usr/bin/find /home/{{ item['key'] }}/ansible -type l"
+- name: Detecting list of existing links to main Git repository access directory for each unprivileged user account
+  shell: "/usr/bin/find /home/{{ item['key'] }}{{ hm_puppeteer__home_subdir }} -type l"
   with_dict: "{{ hm_accounts__users }}"
-  register: result_ansible_links
+  register: result_git_links
   changed_when: False
 
-- name: Removing unnecessary links to main Ansible repository access directory for each unprivileged user account
+- name: Removing unnecessary links to main Git repository access directory for each unprivileged user account
   file:
-    path: "/home/{{ item[0]['item']['key'] }}/ansible/{{ item[1]|basename }}"
+    path: "/home/{{ item[0]['item']['key'] }}{{ hm_puppeteer__home_subdir }}/{{ item[1]|basename }}"
     state: absent
   with_subelements:
-    - "{{ result_ansible_links['results'] }}"
+    - "{{ result_git_links['results'] }}"
     - stdout_lines
   when: (item[1]|basename not in hm_puppeteer__repositories) or (hm_puppeteer__repositories[item[1]|basename] not in hm_accounts__users[item[0]['item']['key']]['groups'])
 
