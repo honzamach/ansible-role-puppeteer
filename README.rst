@@ -148,7 +148,7 @@ Internal role variables
     Path do directory to which shared repositories will be placed.
 
     * *Datatype:* ``string``
-    * *Default:* ``"/var/reps"
+    * *Default:* ``"/var/git"
 
 .. envvar:: hm_puppeteer__home_subdir
 
@@ -156,7 +156,7 @@ Internal role variables
     he is allowed to access. Path must begin with ``/``.
 
     * *Datatype:* ``string``
-    * *Default:* ``"/reps"
+    * *Default:* ``"/git"
 
 .. envvar:: hm_puppeteer__repositories
 
